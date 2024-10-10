@@ -1,0 +1,180 @@
+----------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  C:\Users\Mahjoob.Amani\Desktop\RRWM  Data Activity\camila\Results.log
+  log type:  text
+ opened on:  10 Oct 2024, 10:08:21
+
+. 
+. cd "C:\Users\Mahjoob.Amani\Desktop\RRWM  Data Activity\camila"
+C:\Users\Mahjoob.Amani\Desktop\RRWM  Data Activity\camila
+
+. 
+. 
+. *Recal the cleaned data
+. use "gss.dta"
+
+. 
+. 
+. *To install the estout package
+. ssc install estout, replace
+checking estout consistency and verifying not already installed...
+all files already exist and are up to date.
+
+. 
+. * Survey weight
+. svyset [pw=wght_per]
+
+Sampling weights: wght_per
+             VCE: linearized
+     Single unit: missing
+        Strata 1: <one>
+ Sampling unit 1: <observations>
+           FPC 1: <zero>
+
+. 
+. *Generate a list of summary statistics for key variables
+. svy: proportion living_alone self_assessed_health female vis_minority edu_level
+(running proportion on estimation sample)
+
+Survey: Proportion estimation
+
+Number of strata =      1                   Number of obs   =     19,880
+Number of PSUs   = 19,880                   Population size = 29,053,729
+                                            Design df       =     19,879
+
+------------------------------------------------------------------------
+                       |             Linearized            Logit
+                       | Proportion   std. err.     [95% conf. interval]
+-----------------------+------------------------------------------------
+          living_alone |
+     not living alone  |   .8579271    .002319      .8533207    .8624121
+         living alone  |   .1420729    .002319      .1375879    .1466793
+                       |
+  self_assessed_health |
+      not_good_health  |   .1209569   .0029498      .1152931     .126859
+          good_health  |   .8790431   .0029498       .873141    .8847069
+                       |
+                female |
+                    1  |   .4944582   .0047509      .4851491    .5037712
+                    2  |   .5055418   .0047509      .4962288    .5148509
+                       |
+          vis_minority |
+                    0  |   .8034626   .0042149      .7950696    .8115933
+                    1  |   .1965374   .0042149      .1884067    .2049304
+                       |
+             edu_level |
+         Less than HS  |   .1466894   .0034254      .1401018    .1535315
+     HS or equivalent  |   .2493434   .0042087      .2411855    .2576835
+Trade/College/Non-Uni  |   .3263063   .0043985      .3177443    .3349858
+   University degree+  |   .2776609   .0042028      .2694987    .2859735
+------------------------------------------------------------------------
+
+. 
+. */6.    Create logistic regression models */
+. 
+. *The relationship between living alone and good health
+. 
+. logistic self_assessed_health i.living_alone
+
+Logistic regression                                     Number of obs = 20,602
+                                                        LR chi2(1)    = 225.07
+                                                        Prob > chi2   = 0.0000
+Log likelihood = -8525.9005                             Pseudo R2     = 0.0130
+
+--------------------------------------------------------------------------------------
+self_assessed_health | Odds ratio   Std. err.      z    P>|z|     [95% conf. interval]
+---------------------+----------------------------------------------------------------
+        living_alone |
+       living alone  |    .536762   .0218821   -15.26   0.000     .4955425    .5814101
+               _cons |   7.058342   .1761062    78.32   0.000     6.721484    7.412083
+--------------------------------------------------------------------------------------
+Note: _cons estimates baseline odds.
+
+. 
+. *Store the model for later comparison table
+. est sto model1
+
+. 
+. *The relationship between living alone and good health and SESs
+. logistic self_assessed_health i.living_alone i.female i.vis_minority i.edu_level
+
+Logistic regression                                     Number of obs = 19,880
+                                                        LR chi2(6)    = 766.81
+                                                        Prob > chi2   = 0.0000
+Log likelihood = -7817.9333                             Pseudo R2     = 0.0467
+
+----------------------------------------------------------------------------------------
+  self_assessed_health | Odds ratio   Std. err.      z    P>|z|     [95% conf. interval]
+-----------------------+----------------------------------------------------------------
+          living_alone |
+         living alone  |   .5618103    .024033   -13.48   0.000     .5166272    .6109451
+              2.female |   .9821859   .0408228    -0.43   0.665     .9053469    1.065546
+        1.vis_minority |    1.01542   .0684316     0.23   0.820     .8897771    1.158805
+                       |
+             edu_level |
+     HS or equivalent  |   1.929273   .1111212    11.41   0.000     1.723323    2.159836
+Trade/College/Non-Uni  |   2.399524   .1328623    15.81   0.000     2.152752    2.674585
+   University degree+  |   4.264184   .2830826    21.85   0.000     3.743933     4.85673
+                       |
+                 _cons |   3.354318   .1680227    24.16   0.000     3.040649    3.700344
+----------------------------------------------------------------------------------------
+Note: _cons estimates baseline odds.
+
+. 
+. *Store the model for later comparison table
+. est sto model2
+
+. 
+. *Comparison table for both the bivariate and multivariate models 
+. esttab model1 model2
+
+--------------------------------------------
+                      (1)             (2)   
+             self_asses~h    self_asses~h   
+--------------------------------------------
+self_asses~h                                
+0.living_a~e            0               0   
+                      (.)             (.)   
+
+1.living_a~e       -0.622***       -0.577***
+                 (-15.26)        (-13.48)   
+
+1.female                                0   
+                                      (.)   
+
+2.female                          -0.0180   
+                                  (-0.43)   
+
+0.vis_mino~y                            0   
+                                      (.)   
+
+1.vis_mino~y                       0.0153   
+                                   (0.23)   
+
+1.edu_level                             0   
+                                      (.)   
+
+2.edu_level                         0.657***
+                                  (11.41)   
+
+3.edu_level                         0.875***
+                                  (15.81)   
+
+4.edu_level                         1.450***
+                                  (21.85)   
+
+_cons               1.954***        1.210***
+                  (78.32)         (24.16)   
+--------------------------------------------
+N                   20602           19880   
+--------------------------------------------
+t statistics in parentheses
+* p<0.05, ** p<0.01, *** p<0.001
+
+. 
+. log close
+      name:  <unnamed>
+       log:  C:\Users\Mahjoob.Amani\Desktop\RRWM  Data Activity\camila\Results.log
+  log type:  text
+ closed on:  10 Oct 2024, 10:08:24
+----------------------------------------------------------------------------------------------------
